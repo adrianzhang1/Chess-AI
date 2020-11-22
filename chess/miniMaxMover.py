@@ -21,6 +21,19 @@ class Player:
             "Q":[-2, -1, -1, -.5, -.5, -1, -1, -2, -1, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, -1, -1, .5, .5, .5, .5, .5, 0.0, -1, 0, 0, 0.5, .5, .5, .5, 0.0, -.5, -.5, 0, .5, .5, .5, .5, 0, -.5, -1, 0, .5, .5, .5, .5, 0, -1, -1, 0, 0, 0, 0, 0, 0, -1, -2, -1, -1, -.5, -.5, -1, -1, -2],
             "K":[2, 3, 1, 0, 0, 1, 3, 2, 2, 2, 0, 0, 0, 0, 2, 2, -1, -2, -2, -2, -2, -2, -2, -1,-2, -3, -3, -4, -4, -3, -3, -2, -3, -4, -4, -5, -5, -4, -4, -3,-3, -4, -4, -5, -5, -4, -4, -3,-3, -4, -4, -5, -5, -4, -4, -3,-3, -4, -4, -5, -5, -4, -4, -3]}
         
+        if self.color==chess.BLACK:
+            for key in self.poseval.keys():
+                table=[[]]
+                for y in range(8):
+                    row=[]
+                    for x in range(8):
+                        row.append(self.poseval[key][y*8+x])
+                    table.append(row)
+                table.reverse()
+                out=[]
+                for r in table:
+                    out+=r
+                self.poseval[key]=out
 
     def eval(self,boardd):
         score=0
@@ -55,41 +68,38 @@ class Player:
             #print("someone can check!")
         
         return score
-    def smartEval(self,oldBoard,move,prevEval):
+    def smartEval(self,oldBoard,moves,prevEval):
 
-        oldBoard.push(move)
-        
-        if (oldBoard.is_game_over()):
-            if (oldBoard.is_variant_draw()):
-                return 0
-            if (oldBoard.turn == self.color):
-                return float("inf")
-            else:
-                return -float("inf")
+        scoreChange=0
+        for move in moves:
+            oldBoard.push(move)
+            if (oldBoard.is_game_over()):
+                if (oldBoard.is_variant_draw()):
+                    return 0
+                if (oldBoard.turn == self.color):
+                    return float("inf")
+                else:
+                    return -float("inf")
+            oldBoard.pop()
+            
+            piece = oldBoard.piece_at(move.from_square)
+            p=piece.symbol()
+            if piece
+                score -= self.poseval[p.upper()][chess.parse_square(move.from_square)]
+                score += self.poseval[p.upper()][chess.parse_square(move.to_square)]
 
-        if (oldBoard.is_check() and ( oldBoard.turn == self.color)):
-            score+=1000
-            print("i can check!")
-        
-        oldBoard.pop()
-
-        score=0
-        p = oldBoard.piece_at(move.from_square)
-        score -= self.poseval[p][chess.parse_square(move.from_square)]
-        score += self.poseval[p][chess.parse_square(move.to_square)]
-
-        ep= oldBoard.piece_at(move.to_square)
-        if not ep==None:
-            score+=self.mateval[p]
-        
-        if (self.color == chess.BLACK):
-            score = -1 * score
+            ep= oldBoard.piece_at(move.to_square)
+            if not ep==None:
+                score+=self.mateval[p]
+            
+            if (self.color == chess.BLACK):
+                score = -1 * score
 
         score+=prevEval
         return score
     def move(self, board, t):
-        if (self.color==chess.BLACK):
-            board.mirror()
+        #if (self.color==chess.BLACK):
+        #    board.mirror()
         action=self.moveHelper(board,self.color, 0,-float('inf'),float('inf'))
         #print(action)
         return action
@@ -111,7 +121,7 @@ class Player:
             curDepth += 1
         
         legals = list(board.legal_moves)
-        legals = self.moveOrder(legals,board)
+        #legals = self.moveOrder(legals,board)
 
         for i in legals:
             board.push(i)
@@ -131,6 +141,7 @@ class Player:
                 return max(actionList, key=actionList.get)
             return max(actionList.values())
         return min(actionList.values())
+
     def moveOrder(self, moves, board):
         out=[]
         sortedList=[[]]*7
@@ -140,7 +151,7 @@ class Player:
         
         for lst in sortedList:
             out+=lst
-        for move in out:
-            print(board.piece_at(move.from_square).piece_type)
+        #for move in out:
+            #print(board.piece_at(move.from_square).piece_type)
         return out
         
