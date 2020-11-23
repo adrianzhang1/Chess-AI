@@ -5,10 +5,10 @@ import time
 class Player:
     def __init__(self, board, color, t):
         self.color=color
-        #if self.color==chess.BLACK:
-        #    print("I AM BLACK")
-        #else:
-        #    print("I AM WHITE")
+        if self.color==chess.BLACK:
+            print("I AM BLACK")
+        else:
+            print("I AM WHITE")
         self.depth = 1
         #self.mateval = {"P": 10, "N": 30, "B": 30, "R": 50, "Q": 90, "K": 900, "p": -10, "n": -30, "b": -30, "r": -50, "q": -90, "k": -900}
         self.mateval = [0,10,30,30,50,90,900]
@@ -29,11 +29,15 @@ class Player:
                     for x in range(8):
                         row.append(self.poseval[key][y*8+x])
                     table.append(row)
-                table.reverse()
+                table=table[::-1]
+                for i in range(8):
+                    table[i]=table[i][::-1]
+
                 out=[]
                 for r in table:
                     out+=r
                 self.poseval[key]=out
+        
 
     def eval(self,boardd):
         score=0
@@ -59,9 +63,9 @@ class Player:
         
         if (temp.is_check()):
             if (temp.turn == self.color):
-                score+=5
+                score+=1
             else:
-                score-=5
+                score-=1
         
         return score
     def incrEval(self,oldBoard,newBoard,move,prevEval):
@@ -77,20 +81,23 @@ class Player:
 
         fromPiece = oldBoard.piece_at(move.from_square)
         toPiece=oldBoard.piece_at(move.to_square)
-
         if fromPiece.color==self.color:
             if toPiece: #enemy piece was taken, add mateval
                 incr += self.mateval[toPiece.piece_type]
-            
+
             #subtract previous piece poseval and add new poseval
             incr -= self.poseval[fromPiece.symbol().upper()][move.from_square]
             incr += self.poseval[fromPiece.symbol().upper()][move.to_square]
 
+            if move.promotion: # a friendly promotion happened
+                incr += self.mateval[move.promotion]
         else:
             if toPiece: #friendly piece taken, subtract mateval and poseval
                 incr -= self.mateval[toPiece.piece_type]
                 incr -= self.poseval[toPiece.symbol().upper()][move.to_square]
-        
+            
+            if move.promotion: # an enemy promotion happened
+                incr -= self.mateval[move.promotion]
         return prevEval+incr
         
     
@@ -98,8 +105,16 @@ class Player:
         #if (self.color==chess.BLACK):
         #    board.mirror()
         eval=self.eval(board)
+        legals = list(board.legal_moves)
+        length=len(legals)
+        
+        if length<25:
+            self.depth=2
+        else:
+            self.depth=1
+
         action=self.moveHelper(board, self.color, eval, 0,-float('inf'),float('inf'))
-        #print(action)
+  
         return action
         
     def moveHelper(self, board, col, prevEval, curDepth, alpha, beta):
@@ -120,6 +135,7 @@ class Player:
             curDepth += 1
         
         legals = list(board.legal_moves)
+        
         #legals = self.moveOrder(legals,board)
 
         for i in legals:
@@ -137,8 +153,6 @@ class Player:
 
         if not col==self.color:
             if oldCurDepth == 0:
-                #print("FLAG")
-                #print(curDepth)
                 return max(actionList, key=actionList.get)
             return max(actionList.values())
         return min(actionList.values())
@@ -152,7 +166,5 @@ class Player:
         
         for lst in sortedList:
             out+=lst
-        #for move in out:
-            #print(board.piece_at(move.from_square).piece_type)
         return out
         
