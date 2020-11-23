@@ -5,10 +5,10 @@ import time
 class Player:
     def __init__(self, board, color, t):
         self.color=color
-        if self.color==chess.BLACK:
-            print("I AM BLACK")
-        else:
-            print("I AM WHITE")
+        #if self.color==chess.BLACK:
+        #    print("I AM BLACK")
+        #else:
+        #    print("I AM WHITE")
         self.depth = 1
         #self.mateval = {"P": 10, "N": 30, "B": 30, "R": 50, "Q": 90, "K": 900, "p": -10, "n": -30, "b": -30, "r": -50, "q": -90, "k": -900}
         self.mateval = [0,10,30,30,50,90,900]
@@ -53,61 +53,60 @@ class Player:
                 if not(piece == None):
                     p=piece.symbol()
                     if (piece.color==self.color):
-                        #print(piece.piece_type)
                         score += self.mateval[piece.piece_type] + self.poseval[p.upper()][x + 8*y]
                     else:
-                        #print(piece.piece_type)
-
                         score -= self.mateval[piece.piece_type]
         
         if (temp.is_check()):
             if (temp.turn == self.color):
-                score+=20
+                score+=5
             else:
-                score -=20
-            #print("someone can check!")
+                score-=5
         
         return score
-    def smartEval(self,oldBoard,moves,prevEval):
+    def incrEval(self,oldBoard,newBoard,move,prevEval):
+        incr = 0
 
-        scoreChange=0
-        for move in moves:
-            oldBoard.push(move)
-            if (oldBoard.is_game_over()):
-                if (oldBoard.is_variant_draw()):
-                    return 0
-                if (oldBoard.turn == self.color):
-                    return float("inf")
-                else:
-                    return -float("inf")
-            oldBoard.pop()
+        if (newBoard.is_game_over()):
+            if (newBoard.is_variant_draw()):
+                return 0
+            if (newBoard.turn == self.color):
+                return -float("inf")
+            else:
+                return float("inf")
+
+        fromPiece = oldBoard.piece_at(move.from_square)
+        toPiece=oldBoard.piece_at(move.to_square)
+
+        if fromPiece.color==self.color:
+            if toPiece: #enemy piece was taken, add mateval
+                incr += self.mateval[toPiece.piece_type]
             
-            piece = oldBoard.piece_at(move.from_square)
-            p=piece.symbol()
-            if piece
-                score -= self.poseval[p.upper()][chess.parse_square(move.from_square)]
-                score += self.poseval[p.upper()][chess.parse_square(move.to_square)]
+            #subtract previous piece poseval and add new poseval
+            incr -= self.poseval[fromPiece.symbol().upper()][move.from_square]
+            incr += self.poseval[fromPiece.symbol().upper()][move.to_square]
 
-            ep= oldBoard.piece_at(move.to_square)
-            if not ep==None:
-                score+=self.mateval[p]
-            
-            if (self.color == chess.BLACK):
-                score = -1 * score
-
-        score+=prevEval
-        return score
+        else:
+            if toPiece: #friendly piece taken, subtract mateval and poseval
+                incr -= self.mateval[toPiece.piece_type]
+                incr -= self.poseval[toPiece.symbol().upper()][move.to_square]
+        
+        return prevEval+incr
+        
+    
     def move(self, board, t):
         #if (self.color==chess.BLACK):
         #    board.mirror()
-        action=self.moveHelper(board,self.color, 0,-float('inf'),float('inf'))
+        eval=self.eval(board)
+        action=self.moveHelper(board, self.color, eval, 0,-float('inf'),float('inf'))
         #print(action)
         return action
         
-    def moveHelper(self, board, col, curDepth, alpha, beta):
+    def moveHelper(self, board, col, prevEval, curDepth, alpha, beta):
         
         if (curDepth == self.depth or board.is_game_over()):
-            return self.eval(board)
+            return prevEval
+            #return self.eval(board)
         actionList = dict()
         oldAgentIndex = col
         oldCurDepth = curDepth
@@ -124,8 +123,10 @@ class Player:
         #legals = self.moveOrder(legals,board)
 
         for i in legals:
+            oldBoard=board.copy()
             board.push(i)
-            actionList[i] = self.moveHelper(board, col, curDepth,alpha,beta)
+            nextPrevEval=self.incrEval(oldBoard,board,i,prevEval)
+            actionList[i] = self.moveHelper(board, col, nextPrevEval, curDepth, alpha, beta)
             board.pop()
             if not col==self.color:
                 if actionList[i]>beta: return actionList.get(i)
