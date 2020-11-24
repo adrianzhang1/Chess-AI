@@ -8,7 +8,7 @@ Requirements:
 Contributions:
   Adrian Zhang: implemented minimax and basic eval() function, adding incremental evaluation
 
-  Pranav Bonswani: fixed and added checkmating, adding incremental evaluation
+  Pranav Banwasi: fixed and added checkmating, adding incremental evaluation
 
   Aayush Bharti: fixed and added checkmating, adding incremental evaluation
 
