@@ -14,4 +14,5 @@ Contributions:
 
 Sources Used:
   Piece table: https://www.freecodecamp.org/news/simple-chess-ai-step-by-step-1d55a9266977/
+  
   Opening book: https://chessengines.blogspot.com/2018/05/chess-opening-book-ranomi-180315-bin.html
