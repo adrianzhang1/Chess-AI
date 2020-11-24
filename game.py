@@ -1,9 +1,11 @@
 import chess
 import chess.pgn
 import time
-import randomMover as player1
+#import randomMover as player1
 import miniMaxMover as player2
-#import miniMaxMover as player2
+#import miniMaxMover as player1
+import smartMover as player1
+#import GoodChessAI.goodAI as player2
 
 game = chess.pgn.Game()
 node = game
