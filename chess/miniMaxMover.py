@@ -1,6 +1,7 @@
 import random
 import chess
 import time
+from chess import polyglot
 
 class Player:
     def __init__(self, board, color, t):
@@ -12,7 +13,7 @@ class Player:
         self.depth = 1
         #self.mateval = {"P": 10, "N": 30, "B": 30, "R": 50, "Q": 90, "K": 900, "p": -10, "n": -30, "b": -30, "r": -50, "q": -90, "k": -900}
         self.mateval = [0,10,30,30,50,90,900]
-
+        self.reader=chess.polyglot.open_reader("opening.bin")
 
         self.poseval = {"P":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, -2.0, -2.0, 1.0, 1.0, 0.5, 0.5, -0.5, 1.0, 0.0, 0.0, -1.0, -0.5, 0.5, 0.0, 0.0, 0.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.5, 0.5, 1.0, 2.5, 2.5, 1.0, 0.5, 0.5, 1.0, 1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 1.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
             "N":[-5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0, -4.0, -2.0, 0.0, 0.5, 0.5, 0.0, -2.0, -4.0, -3.0, 0.5, 1.0, 1.5, 1.5, 1.0, 0.5, -3.0, -3.0, 0.0, 1.5, 2.0, 2.0, 1.5, 0.0, -3.0, -3.0, 0.5, 1.5, 2.0, 2.0, 1.5, 0.5, -3.0, -3.0, 0.0, 1.0, 1.5, 1.5, 1.0, 0.0, -3.0, -4.0, -2.0, 0.0, 0.0, 0.0, 0.0, -2.0, -4.0, -5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0], 
@@ -21,7 +22,7 @@ class Player:
             "Q":[-2, -1, -1, -.5, -.5, -1, -1, -2, -1, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, -1, -1, .5, .5, .5, .5, .5, 0.0, -1, 0, 0, 0.5, .5, .5, .5, 0.0, -.5, -.5, 0, .5, .5, .5, .5, 0, -.5, -1, 0, .5, .5, .5, .5, 0, -1, -1, 0, 0, 0, 0, 0, 0, -1, -2, -1, -1, -.5, -.5, -1, -1, -2],
             "K":[2, 3, 1, 0, 0, 1, 3, 2, 2, 2, 0, 0, 0, 0, 2, 2, -1, -2, -2, -2, -2, -2, -2, -1,-2, -3, -3, -4, -4, -3, -3, -2, -3, -4, -4, -5, -5, -4, -4, -3,-3, -4, -4, -5, -5, -4, -4, -3,-3, -4, -4, -5, -5, -4, -4, -3,-3, -4, -4, -5, -5, -4, -4, -3]}
         
-        if self.color==chess.BLACK:
+        if self.color==chess.BLACK: #change piece tables
             for key in self.poseval.keys():
                 table=[[]]
                 for y in range(8):
@@ -61,7 +62,7 @@ class Player:
                     else:
                         score -= self.mateval[piece.piece_type]
         
-        if (temp.is_check()):
+        if (temp.is_check()): #checking bonus
             if (temp.turn == self.color):
                 score+=1
             else:
@@ -102,19 +103,26 @@ class Player:
         
     
     def move(self, board, t):
-        #if (self.color==chess.BLACK):
-        #    board.mirror()
         eval=self.eval(board)
         legals = list(board.legal_moves)
         length=len(legals)
         
-        if length<25:
+        if length<22:
             self.depth=2
         else:
             self.depth=1
 
-        action=self.moveHelper(board, self.color, eval, 0,-float('inf'),float('inf'))
-  
+        action=None
+        max = -float("inf")
+        for entry in self.reader.find_all(board):
+            if (max < entry.weight):
+                max = entry.weight
+                action = entry.move
+        
+        if action==None:
+            action=self.moveHelper(board, self.color, eval, 0,-float('inf'),float('inf'))
+        
+            
         return action
         
     def moveHelper(self, board, col, prevEval, curDepth, alpha, beta):
