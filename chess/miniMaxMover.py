@@ -6,11 +6,8 @@ from chess import polyglot
 class Player:
     def __init__(self, board, color, t):
         self.color=color
-        if self.color==chess.BLACK:
-            print("I AM BLACK")
-        else:
-            print("I AM WHITE")
-        self.depth = 1
+        
+        self.depth = 3
         #self.mateval = {"P": 10, "N": 30, "B": 30, "R": 50, "Q": 90, "K": 900, "p": -10, "n": -30, "b": -30, "r": -50, "q": -90, "k": -900}
         self.mateval = [0,10,30,30,50,90,900]
         self.reader=chess.polyglot.open_reader("opening.bin")
@@ -107,11 +104,6 @@ class Player:
         legals = list(board.legal_moves)
         length=len(legals)
         
-        if length<22:
-            self.depth=2
-        else:
-            self.depth=1
-
         action=None
         max = -float("inf")
         for entry in self.reader.find_all(board):
@@ -143,8 +135,6 @@ class Player:
             curDepth += 1
         
         legals = list(board.legal_moves)
-        
-        #legals = self.moveOrder(legals,board)
 
         for i in legals:
             oldBoard=board.copy()
@@ -152,6 +142,7 @@ class Player:
             nextPrevEval=self.incrEval(oldBoard,board,i,prevEval)
             actionList[i] = self.moveHelper(board, col, nextPrevEval, curDepth, alpha, beta)
             board.pop()
+
             if not col==self.color:
                 if actionList[i]>beta: return actionList.get(i)
                 alpha=max(alpha,actionList.get(i))
@@ -161,18 +152,9 @@ class Player:
 
         if not col==self.color:
             if oldCurDepth == 0:
+            
                 return max(actionList, key=actionList.get)
             return max(actionList.values())
         return min(actionList.values())
 
-    def moveOrder(self, moves, board):
-        out=[]
-        sortedList=[[]]*7
-
-        for move in moves:
-            sortedList[board.piece_at(move.from_square).piece_type].append(move)
-        
-        for lst in sortedList:
-            out+=lst
-        return out
         
